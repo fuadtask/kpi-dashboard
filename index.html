@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KPI Calculator — لوحة مؤشرات الأداء</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #07090f;
+  --s1: #0d1117;
+  --s2: #131b27;
+  --s3: #1a2438;
+  --border: #1e2d45;
+  --border2: #243450;
+  --c-teal: #00d4aa;
+  --c-blue: #4f8ef7;
+  --c-violet: #a78bfa;
+  --c-amber: #fbbf24;
+  --c-red: #f87171;
+  --c-green: #4ade80;
+  --c-pink: #f472b6;
+  --c-orange: #fb923c;
+  --c-sky: #38bdf8;
+  --text: #e8f0ff;
+  --text2: #7a90b8;
+  --text3: #3d5070;
+  --font: 'IBM Plex Sans Arabic', sans-serif;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Animated background */
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(0,212,170,0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(79,142,247,0.04) 0%, transparent 60%),
+    linear-gradient(rgba(0,212,170,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,170,0.025) 1px, transparent 1px);
+  background-size: auto, auto, 48px 48px, 48px 48px;
+  pointer-events:none;
+  z-index:0;
+}
+
+.wrap { max-width:1200px; margin:0 auto; padding:0 20px; position:relative; z-index:1; }
+
+/* ═══════════════ HEADER ═══════════════ */
+.hero {
+  padding: 60px 0 48px;
+  text-align: center;
+  animation: fadeUp .7s ease both;
+}
+
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--c-teal);
+  background: rgba(0,212,170,0.08);
+  border: 1px solid rgba(0,212,170,0.2);
+  padding: 6px 18px;
+  border-radius: 100px;
+  margin-bottom: 20px;
+}
+
+.hero h1 {
+  font-size: clamp(28px, 5vw, 48px);
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 12px;
+}
+
+.hero h1 em { font-style: normal; color: var(--c-teal); }
+
+.hero p {
+  color: var(--text2);
+  font-size: 15px;
+  max-width: 520px;
+  margin: 0 auto 28px;
+  line-height: 1.7;
+}
+
+.hero-stats {
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.hero-stat {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 20px;
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.hero-stat strong {
+  display: block;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1;
+  margin-bottom: 2px;
+}
+
+/* ═══════════════ CATEGORY TABS ═══════════════ */
+.cat-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin-bottom: 32px;
+  scrollbar-width: none;
+  animation: fadeUp .7s .1s ease both;
+}
+
+.cat-tabs::-webkit-scrollbar { display: none; }
+
+.cat-tab {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--s1);
+  color: var(--text2);
+  transition: all .2s;
+  white-space: nowrap;
+}
+
+.cat-tab:hover { color: var(--text); border-color: var(--border2); }
+.cat-tab.active { color: #fff; }
+
+.cat-tab[data-cat="service"].active  { background: rgba(0,212,170,.12);  border-color: var(--c-teal);   color: var(--c-teal); }
+.cat-tab[data-cat="quality"].active  { background: rgba(79,142,247,.12); border-color: var(--c-blue);   color: var(--c-blue); }
+.cat-tab[data-cat="people"].active   { background: rgba(167,139,250,.12);border-color: var(--c-violet); color: var(--c-violet); }
+.cat-tab[data-cat="sales"].active    { background: rgba(251,191,36,.12); border-color: var(--c-amber);  color: var(--c-amber); }
+.cat-tab[data-cat="ops"].active      { background: rgba(248,113,113,.12);border-color: var(--c-red);    color: var(--c-red); }
+
+.dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.dot-teal   { background: var(--c-teal); }
+.dot-blue   { background: var(--c-blue); }
+.dot-violet { background: var(--c-violet); }
+.dot-amber  { background: var(--c-amber); }
+.dot-red    { background: var(--c-red); }
+
+/* ═══════════════ KPI GRID ═══════════════ */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+  margin-bottom: 60px;
+}
+
+.kpi-card {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  transition: border-color .2s, transform .2s;
+  animation: fadeUp .5s ease both;
+}
+
+.kpi-card:hover { transform: translateY(-2px); border-color: var(--border2); }
+
+.kpi-card[data-cat="service"]:hover { border-color: rgba(0,212,170,.4); }
+.kpi-card[data-cat="quality"]:hover { border-color: rgba(79,142,247,.4); }
+.kpi-card[data-cat="people"]:hover  { border-color: rgba(167,139,250,.4); }
+.kpi-card[data-cat="sales"]:hover   { border-color: rgba(251,191,36,.4); }
+.kpi-card[data-cat="ops"]:hover     { border-color: rgba(248,113,113,.4); }
+
+.kpi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 20px 0;
+  margin-bottom: 16px;
+}
+
+.kpi-title-wrap { display: flex; align-items: center; gap: 10px; }
+
+.kpi-icon {
+  width: 38px; height: 38px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.icon-teal   { background: rgba(0,212,170,.12); }
+.icon-blue   { background: rgba(79,142,247,.12); }
+.icon-violet { background: rgba(167,139,250,.12); }
+.icon-amber  { background: rgba(251,191,36,.12); }
+.icon-red    { background: rgba(248,113,113,.12); }
+.icon-green  { background: rgba(74,222,128,.12); }
+.icon-pink   { background: rgba(244,114,182,.12); }
+.icon-orange { background: rgba(251,146,60,.12); }
+.icon-sky    { background: rgba(56,189,248,.12); }
+
+.kpi-name { font-size: 14px; font-weight: 700; color: var(--text); }
+.kpi-abbr { font-size: 11px; color: var(--text3); margin-top: 1px; font-weight: 500; }
+
+.kpi-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 100px;
+  letter-spacing: .5px;
+}
+
+.tag-service { background: rgba(0,212,170,.1);  color: var(--c-teal); }
+.tag-quality { background: rgba(79,142,247,.1); color: var(--c-blue); }
+.tag-people  { background: rgba(167,139,250,.1);color: var(--c-violet); }
+.tag-sales   { background: rgba(251,191,36,.1); color: var(--c-amber); }
+.tag-ops     { background: rgba(248,113,113,.1);color: var(--c-red); }
+
+.kpi-body { padding: 0 20px 20px; }
+
+.formula-box {
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--text2);
+  margin-bottom: 16px;
+  font-family: 'Courier New', monospace;
+  direction: ltr;
+  text-align: left;
+}
+
+/* Fields */
+.fields { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+
+.field label { display: block; font-size: 11px; color: var(--text2); margin-bottom: 5px; font-weight: 600; }
+
+.field input {
+  width: 100%;
+  background: var(--s2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+  transition: border-color .2s;
+  direction: ltr;
+  text-align: right;
+}
+
+.field input::placeholder { color: var(--text3); }
+
+/* Calc button */
+.calc-btn {
+  width: 100%;
+  padding: 11px;
+  border-radius: 8px;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all .2s;
+}
+
+.btn-teal   { background: var(--c-teal);   color: #07090f; }
+.btn-blue   { background: var(--c-blue);   color: #fff; }
+.btn-violet { background: var(--c-violet); color: #fff; }
+.btn-amber  { background: var(--c-amber);  color: #07090f; }
+.btn-red    { background: var(--c-red);    color: #fff; }
+.btn-green  { background: var(--c-green);  color: #07090f; }
+.btn-pink   { background: var(--c-pink);   color: #fff; }
+.btn-orange { background: var(--c-orange); color: #fff; }
+.btn-sky    { background: var(--c-sky);    color: #07090f; }
+
+.calc-btn:hover { opacity: .88; transform: translateY(-1px); }
+
+/* Result */
+.result {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 10px;
+  display: none;
+  animation: popIn .35s cubic-bezier(.34,1.56,.64,1) both;
+}
+
+.result.show { display: block; }
+
+.result-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.result-num { font-size: 36px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums; }
+.result-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 100px; }
+
+.badge-good   { background: rgba(74,222,128,.15);  color: var(--c-green); border: 1px solid rgba(74,222,128,.3); }
+.badge-ok     { background: rgba(251,191,36,.15);  color: var(--c-amber); border: 1px solid rgba(251,191,36,.3); }
+.badge-bad    { background: rgba(248,113,113,.15); color: var(--c-red);   border: 1px solid rgba(248,113,113,.3); }
+
+.progress-bar { background: var(--s3); border-radius: 3px; height: 4px; overflow: hidden; margin-bottom: 8px; }
+.progress-fill { height: 100%; border-radius: 3px; transition: width .8s cubic-bezier(.4,0,.2,1); }
+
+.result-tip { font-size: 11.5px; color: var(--text2); line-height: 1.6; }
+
+/* result color themes */
+.res-teal   { background: rgba(0,212,170,.07);  border: 1px solid rgba(0,212,170,.2); }
+.res-blue   { background: rgba(79,142,247,.07); border: 1px solid rgba(79,142,247,.2); }
+.res-violet { background: rgba(167,139,250,.07);border: 1px solid rgba(167,139,250,.2); }
+.res-amber  { background: rgba(251,191,36,.07); border: 1px solid rgba(251,191,36,.2); }
+.res-red    { background: rgba(248,113,113,.07);border: 1px solid rgba(248,113,113,.2); }
+.res-green  { background: rgba(74,222,128,.07); border: 1px solid rgba(74,222,128,.2); }
+.res-pink   { background: rgba(244,114,182,.07);border: 1px solid rgba(244,114,182,.2); }
+.res-orange { background: rgba(251,146,60,.07); border: 1px solid rgba(251,146,60,.2); }
+.res-sky    { background: rgba(56,189,248,.07); border: 1px solid rgba(56,189,248,.2); }
+
+.num-teal   { color: var(--c-teal); }
+.num-blue   { color: var(--c-blue); }
+.num-violet { color: var(--c-violet); }
+.num-amber  { color: var(--c-amber); }
+.num-red    { color: var(--c-red); }
+.num-green  { color: var(--c-green); }
+.num-pink   { color: var(--c-pink); }
+.num-orange { color: var(--c-orange); }
+.num-sky    { color: var(--c-sky); }
+
+.fill-teal   { background: linear-gradient(90deg, var(--c-teal),   #00f0c0); }
+.fill-blue   { background: linear-gradient(90deg, var(--c-blue),   #93c5fd); }
+.fill-violet { background: linear-gradient(90deg, var(--c-violet), #ddd6fe); }
+.fill-amber  { background: linear-gradient(90deg, var(--c-amber),  #fde68a); }
+.fill-red-bar{ background: linear-gradient(90deg, var(--c-red),    #fca5a5); }
+.fill-green  { background: linear-gradient(90deg, var(--c-green),  #bbf7d0); }
+.fill-pink   { background: linear-gradient(90deg, var(--c-pink),   #fbcfe8); }
+.fill-orange { background: linear-gradient(90deg, var(--c-orange), #fed7aa); }
+.fill-sky    { background: linear-gradient(90deg, var(--c-sky),    #bae6fd); }
+
+/* hidden card */
+.kpi-card.hidden { display: none; }
+
+/* ═══════════════ FOOTER ═══════════════ */
+.footer {
+  text-align: center;
+  padding: 32px 0 24px;
+  font-size: 11px;
+  color: var(--text3);
+  letter-spacing: 1px;
+  border-top: 1px solid var(--border);
+}
+
+/* ═══════════════ ANIMATIONS ═══════════════ */
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(16px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+@keyframes popIn {
+  from { opacity:0; transform:scale(.93); }
+  to   { opacity:1; transform:scale(1); }
+}
+
+@media (max-width:600px) {
+  .kpi-grid { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 26px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-eyebrow">🎯 Customer Operations</div>
+    <h1>لوحة <em>مؤشرات الأداء</em><br>للعمليات والخدمة</h1>
+    <p>احسب مؤشرات الأداء الرئيسية لفريقك بدقة — مناسب لجميع قطاعات الخدمة والعمليات</p>
+    <div class="hero-stats">
+      <div class="hero-stat"><strong>9</strong>مؤشر أداء</div>
+      <div class="hero-stat"><strong>5</strong>تصنيفات</div>
+      <div class="hero-stat"><strong>فوري</strong>الحساب</div>
+    </div>
+  </div>
+
+  <!-- CATEGORY TABS -->
+  <div class="cat-tabs">
+    <button class="cat-tab active" data-cat="all" onclick="filterCat('all')">🔷 الكل</button>
+    <button class="cat-tab" data-cat="service" onclick="filterCat('service')"><span class="dot dot-teal"></span>خدمة العملاء</button>
+    <button class="cat-tab" data-cat="quality" onclick="filterCat('quality')"><span class="dot dot-blue"></span>الجودة</button>
+    <button class="cat-tab" data-cat="people" onclick="filterCat('people')"><span class="dot dot-violet"></span>الكوادر البشرية</button>
+    <button class="cat-tab" data-cat="sales" onclick="filterCat('sales')"><span class="dot dot-amber"></span>المبيعات</button>
+    <button class="cat-tab" data-cat="ops" onclick="filterCat('ops')"><span class="dot dot-red"></span>العمليات</button>
+  </div>
+
+  <!-- KPI GRID -->
+  <div class="kpi-grid" id="grid">
+
+    <!-- ═══ 1. FCR ═══ -->
+    <div class="kpi-card" data-cat="service">
+      <div class="kpi-header">
+        <div class="kpi-title-wrap">
+          <div class="kpi-icon icon-teal">📞</div>
+          <div><div class="kpi-name">First Contact Resolution</div><div class="kpi-abbr">FCR — حل الطلب من أول تواصل</div></div>
+        </div>
+        <span class="kpi-tag tag-service">Service</span>
+      </div>
+      <div class="kpi-body">
+        <div class="formula-box">FCR% = (Resolved 1st Contact ÷ Total Contacts) × 100</div>
+        <div class="fields">
+          <div class="field"><label>إجمالي التواصلات</label><input type="number" id="fcr-total" placeholder="500" min="1"></div>
+          <div class="field"><label>المحلولة من أول تواصل</label><input type="number" id="fcr-res" placeholder="380" min="0"></div>
+        </div>
+        <button class="calc-btn btn-teal" onclick="calc_FCR()">احسب FCR</button>
+        <div class="result res-teal" id="r-fcr">
+          <div class="result-row">
+            <div class="result-num num-teal" id="v-fcr">—</div>
+            <div class="result-badge" id="b-fcr"></div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill fill-teal" id="p-fcr" style="width:0"></div></div>
+          <div class="result-tip" id="t-fcr"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 2. CSAT ═══ -->
+    <div class="kpi-card" data-cat="quality">
+      <div class="kpi-header">
+        <div class="kpi-title-wrap">
+          <div class="kpi-icon icon-blue">⭐</div>
+          <div><div class="kpi-name">Customer Satisfaction Score</div><div class="kpi-abbr">CSAT — رضا العملاء</div></div>
+        </div>
+        <span class="kpi-tag tag-quality">Quality</span>
+      </div>
+      <div class="kpi-body">
+        <div class="formula-box">CSAT% = (Positive Responses ÷ Total Responses) × 100</div>
+        <div class="fields">
+          <div class="field"><label>إجمالي الردود / التقييمات</label><input type="number" id="csat-total" placeholder="300" min="1"></div>
+          <div class="field"><label>الردود الإيجابية (4-5 نجوم)</label><input type="number" id="csat-pos" placeholder="255" min="0"></div>
+        </div>
+        <button class="calc-btn btn-blue" onclick="calc_CSAT()">احسب CSAT</button>
+        <div class="result res-blue" id="r-csat">
+          <div class="result-row">
+            <div class="result-num num-blue" id="v-csat">—</div>
+            <div class="result-badge" id="b-csat"></div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill fill-blue" id="p-csat" style="width:0"></div></div>
+          <div class="result-tip" id="t-csat"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 3. NPS ═══ -->
+    <div class="kpi-card" data-cat="quality">
+      <div class="kpi-header">
+        <div class="kpi-title-wrap">
+          <div class="kpi-icon icon-sky">💎</div>
+          <div><div class="kpi-name">Net Promoter Score</div><div class="kpi-abbr">NPS — ولاء العملاء</div></div>
+        </div>
+        <span class="kpi-tag tag-quality">Quality</span>
+      </div>
+      <div class="kpi-body">
+        <div class="formula-box">NPS = %Promoters (9-10) − %Detractors (0-6)</div>
+        <div class="fields">
+          <div class="field"><label>إجمالي المستجيبين</label><input type="number" id="nps-total" placeholder="200" min="1"></div>
+          <div class="field"><label>Promoters (أعطوا 9-10)</label><input type="number" id="nps-pro" placeholder="120" min="0"></div>
+          <div class="field"><label>Detractors (أعطوا 0-6)</label><input type="number" id="nps-det" placeholder="30" min="0"></div>
+        </div>
+        <button class="calc-btn btn-sky" onclick="calc_NPS()">احسب NPS</button>
+        <div class="result res-sky" id="r-nps">
+          <div class="result-row">
+            <div class="result-num num-sky" id="v-nps">—</div>
+            <div class="result-badge" id="b-nps"></div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill fill-sky" id="p-nps" style="width:0"></div></div>
+          <div class="result-tip" id="t-nps"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 4. AHT ═══ -->
+    <div class="kpi-card" data-cat="service">
+      <div class="kpi-header">
+        <div class="kpi-title-wrap">
+          <div class="kpi-icon icon-orange">⏱️</div>
+          <div><div class="kpi-name">Average Handle Time</div><div class="kpi-abbr">AHT — متوسط وقت المعالجة</div></div>
+        </div>
+        <span class="kpi-tag tag-service">Service</span>
+      </div>
+      <div class="kpi-body">
+        <div class="formula-box">AHT = Talk Time + Hold Time + After-Call Work</div>
+        <div class="fields">
+          <div class="field"><label>إجمالي وقت الحديث (دقيقة)</label><input type="number" id="aht-talk" placeholder="450" min="0"></div>
+          <div class="field"><label>إجمالي وقت الانتظار (دقيقة)</label><input type="number" id="aht-hold" placeholder="60" min="0"></div>
+          <div class="field"><label>وقت العمل بعد المكالمة (دقيقة)</label><input type="number" id="aht-acw" placeholder="90" min="0"></div>
+          <div class="field"><label>عدد المكالمات / الطلبات</label><input type="number" id="aht-calls" placeholder="100" min="1"></div>
+        </div>
+        <button class="calc-btn btn-orange" onclick="calc_AHT()">احسب AHT</button>
+        <div class="result res-orange" id="r-aht">
+          <div class="result-row">
+            <div class="result-num num-orange" id="v-aht">—</div>
+            <div class="result-badge" id="b-aht"></div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill fill-orange" id="p-aht" style="width:0"></div></div>
+          <div class="result-tip" id="t-aht"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 5. Productivity ═══ -->
+    <div class="kpi-card" data-cat="people">
+      <div class="kpi-header">
+        <div class="kpi-title-wrap">
+          <div class="kpi-icon icon-violet">⚡</div>
+          <div><div class="kpi-name">Productivity Index</div><div class="kpi-abbr">PI — مؤشر الإنتاجية</div></div>
+        </div>
+        <span class="kpi-tag tag-people">People</span>
+      </div>
+      <div class="kpi-body">
+        <div class="formula-box">PI% = (Handled ÷ Target) × 60% + (Actual hrs ÷ Available hrs) × 40%</div>
+        <div class="fields">
+          <div class="field"><label>الطلبات / المهام المُعالجة</label><input type="number" id="pi-handled" placeholder="85" min="0"></div>
+          <div class="field"><label>الـ Target اليومي</label><input type="number" id="pi-target" placeholder="100" min="1"></div>
+          <div class="field"><label>ساعات العمل المتاحة</label><input type="number" id="pi-avail" placeholder="8" min="1" step=".5"></div>
+          <div class="field"><label>ساعات العمل المنتجة الفعلية</label><input type="number" id="pi-actual" placeholder="7" min="0" step=".5"></div>
+        </div>
+        <button class="calc-btn btn-violet" onclick="calc_PI()">احسب Productivity</button>
+        <div class="result res-violet" id="r-pi">
+          <div class="result-row">
+            <div class="result-num num-violet" id="v-pi">—</div>
+            <div class="result-badge" id="b-pi"></div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill fill-violet" id="p-pi" style="width:0"></div></div>
+          <div class="result-tip" id="t-pi"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 6. Absenteeism ═══ -->
+    <div class="kpi-card" data-cat="people">
+      <div class="kpi-header">
+        <div class="kpi-title-wrap">
+          <div class="kpi-icon icon-amber">📅</div>
+          <div><div class="kpi-name">Absenteeism Rate</div><div class="kpi-abbr">معدل الغياب غير المخطط</div></div>
+        </div>
+        <span class="kpi-tag tag-people">People</span>
+      </div>
+      <div class="kpi-body">
+        <div class="formula-box">Absenteeism% = (Absent Days ÷ Scheduled Days) × 100</div>
+        <div class="fields">
+          <div class="field"><label>عدد الموظفين</label><input type="number" id="abs-staff" placeholder="12" min="1"></div>
+          <div class="field"><label>أيام العمل المجدولة في الفترة</label><input type="number" id="abs-days" placeholder="22" min="1"></div>
+          <div class="field"><label>إجمالي أيام الغياب غير المخطط</label><input type="number" id="abs-absent" placeholder="7" min="0"></div>
+        </div>
+        <button class="calc-btn btn-amber" onclick="calc_ABS()">احسب Absenteeism</button>
+        <div class="result res-amber" id="r-abs">
+          <div class="result-row">
+            <div class="result-num num-amber" id="v-abs">—</div>
+            <div class="result-badge" id="b-abs"></div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill fill-amber" id="p-abs" style="width:0"></div></div>
+          <div class="result-tip" id="t-abs"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 7. Conversion Rate ═══ -->
+    <div class="kpi-card" data-cat="sales">
+      <div class="kpi-header">
+        <div class="kpi-title-wrap">
+          <div class="kpi-icon icon-green">💰</div>
+          <div><div class="kpi-name">Conversion Rate</div><div class="kpi-abbr">معدل التحويل — المبيعات</div></div>
+        </div>
+        <span class="kpi-tag tag-sales">Sales</span>
+      </div>
+      <div class="kpi-body">
+        <div class="formula-box">CVR% = (Converted Leads ÷ Total Leads) × 100</div>
+        <div class="fields">
+          <div class="field"><label>إجمالي العملاء المحتملين / الطلبات</label><input type="number" id="cvr-total" placeholder="200" min="1"></div>
+          <div class="field"><label>العملاء الذين أتموا الشراء / التحويل</label><input type="number" id="cvr-conv" placeholder="48" min="0"></div>
+        </div>
+        <button class="calc-btn btn-green" onclick="calc_CVR()">احسب Conversion</button>
+        <div class="result res-green" id="r-cvr">
+          <div class="result-row">
+            <div class="result-num num-green" id="v-cvr">—</div>
+            <div class="result-badge" id="b-cvr"></div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill fill-green" id="p-cvr" style="width:0"></div></div>
+          <div class="result-tip" id="t-cvr"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 8. SLA Compliance ═══ -->
+    <div class="kpi-card" data-cat="ops">
+      <div class="kpi-header">
+        <div class="kpi-title-wrap">
+          <div class="kpi-icon icon-red">🎯</div>
+          <div><div class="kpi-name">SLA Compliance Rate</div><div class="kpi-abbr">نسبة الالتزام بمستوى الخدمة</div></div>
+        </div>
+        <span class="kpi-tag tag-ops">Ops</span>
+      </div>
+      <div class="kpi-body">
+        <div class="formula-box">SLA% = (On-Time Resolved ÷ Total Tickets) × 100</div>
+        <div class="fields">
+          <div class="field"><label>إجمالي الطلبات / التذاكر</label><input type="number" id="sla-total" placeholder="350" min="1"></div>
+          <div class="field"><label>الطلبات المحلولة في الوقت المحدد</label><input type="number" id="sla-ontime" placeholder="315" min="0"></div>
+        </div>
+        <button class="calc-btn btn-red" onclick="calc_SLA()">احسب SLA</button>
+        <div class="result res-red" id="r-sla">
+          <div class="result-row">
+            <div class="result-num num-red" id="v-sla">—</div>
+            <div class="result-badge" id="b-sla"></div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill fill-red-bar" id="p-sla" style="width:0"></div></div>
+          <div class="result-tip" id="t-sla"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ 9. Churn Rate ═══ -->
+    <div class="kpi-card" data-cat="sales">
+      <div class="kpi-header">
+        <div class="kpi-title-wrap">
+          <div class="kpi-icon icon-pink">📉</div>
+          <div><div class="kpi-name">Customer Churn Rate</div><div class="kpi-abbr">معدل فقدان العملاء</div></div>
+        </div>
+        <span class="kpi-tag tag-sales">Sales</span>
+      </div>
+      <div class="kpi-body">
+        <div class="formula-box">Churn% = (Lost Customers ÷ Start-of-Period Customers) × 100</div>
+        <div class="fields">
+          <div class="field"><label>عدد العملاء بداية الفترة</label><input type="number" id="churn-start" placeholder="1000" min="1"></div>
+          <div class="field"><label>عدد العملاء الذين غادروا</label><input type="number" id="churn-lost" placeholder="45" min="0"></div>
+        </div>
+        <button class="calc-btn btn-pink" onclick="calc_CHURN()">احسب Churn</button>
+        <div class="result res-pink" id="r-churn">
+          <div class="result-row">
+            <div class="result-num num-pink" id="v-churn">—</div>
+            <div class="result-badge" id="b-churn"></div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill fill-pink" id="p-churn" style="width:0"></div></div>
+          <div class="result-tip" id="t-churn"></div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /kpi-grid -->
+
+  <div class="footer">KPI Operations Calculator · جميع الحقوق محفوظة · مبني بـ ❤️ لأصحاب الاختصاص</div>
+
+</div><!-- /wrap -->
+
+<script>
+/* ── helpers ── */
+function show(id, val, badge, bar, tip, resClass) {
+  const el = document.getElementById('r-' + id);
+  el.classList.add('show');
+  document.getElementById('v-' + id).textContent = val;
+  document.getElementById('b-' + id).className = 'result-badge ' + badge.cls;
+  document.getElementById('b-' + id).textContent = badge.txt;
+  document.getElementById('p-' + id).style.width = Math.min(bar, 100) + '%';
+  document.getElementById('t-' + id).textContent = tip;
+}
+
+function badge(level) {
+  return {
+    good: { cls: 'badge-good', txt: '✓ ممتاز' },
+    ok:   { cls: 'badge-ok',   txt: '⚡ مقبول' },
+    bad:  { cls: 'badge-bad',  txt: '⚠ يحتاج تحسين' },
+  }[level];
+}
+
+function num(id) { return parseFloat(document.getElementById(id).value); }
+
+/* ── FCR ── */
+function calc_FCR() {
+  const t = num('fcr-total'), r = num('fcr-res');
+  if (!t || isNaN(r) || r > t) return alert('تحقق من الأرقام');
+  const v = (r / t * 100).toFixed(1);
+  const lvl = v >= 75 ? 'good' : v >= 60 ? 'ok' : 'bad';
+  const tips = {
+    good: `ممتاز! ${v}% من الطلبات تُحل في أول تواصل. ركّز على الحفاظ على هذا المستوى وتحليل الـ${(100-v).toFixed(1)}% المتبقية.`,
+    ok:   `نتيجة مقبولة ${v}%. راجع أسباب تكرار التواصل — ابحث عن الأنماط المتكررة وطوّر قاعدة المعرفة لدى الفريق.`,
+    bad:  `${v}% تحت المستوى. أكثر من 40% من العملاء يرجعون بنفس المشكلة. راجع الـ scripts وأعطِ صلاحيات أوسع للموظفين.`,
+  };
+  show('fcr', v + '%', badge(lvl), v, tips[lvl]);
+}
+
+/* ── CSAT ── */
+function calc_CSAT() {
+  const t = num('csat-total'), p = num('csat-pos');
+  if (!t || isNaN(p) || p > t) return alert('تحقق من الأرقام');
+  const v = (p / t * 100).toFixed(1);
+  const lvl = v >= 80 ? 'good' : v >= 65 ? 'ok' : 'bad';
+  const tips = {
+    good: `CSAT ممتاز ${v}%! العملاء راضون بشكل واضح. حافظ على جودة الخدمة واستمر في جمع الـ feedback لتحسين مستمر.`,
+    ok:   `نتيجة مقبولة ${v}%. راجع التعليقات السلبية لفهم نقاط الألم الرئيسية وضع خطة لتحسين التجربة.`,
+    bad:  `${v}% CSAT منخفض. هذا مؤشر خطر — راجع فوراً جودة الخدمة وأسلوب التعامل وسرعة الاستجابة.`,
+  };
+  show('csat', v + '%', badge(lvl), v, tips[lvl]);
+}
+
+/* ── NPS ── */
+function calc_NPS() {
+  const t = num('nps-total'), p = num('nps-pro'), d = num('nps-det');
+  if (!t || isNaN(p) || isNaN(d) || p + d > t) return alert('تحقق من الأرقام');
+  const v = Math.round((p / t * 100) - (d / t * 100));
+  const lvl = v >= 50 ? 'good' : v >= 0 ? 'ok' : 'bad';
+  const barPct = ((v + 100) / 200) * 100;
+  const tips = {
+    good: `NPS ${v} ممتاز! أكثر من نصف عملائك سيرشحونك للآخرين. هذا مستوى نمو طبيعي قوي.`,
+    ok:   `NPS ${v} مقبول. ركّز على تحويل الـ Passives إلى Promoters عبر تحسين نقاط التجربة الحاسمة.`,
+    bad:  `NPS ${v} سلبي — عدد المنتقدين يتجاوز المروّجين. يجب التصرف فوراً لمعالجة الأسباب الجذرية.`,
+  };
+  show('nps', v.toString(), badge(lvl), barPct, tips[lvl]);
+}
+
+/* ── AHT ── */
+function calc_AHT() {
+  const talk = num('aht-talk'), hold = num('aht-hold'), acw = num('aht-acw'), calls = num('aht-calls');
+  if (!calls || isNaN(talk) || isNaN(hold) || isNaN(acw)) return alert('تحقق من الأرقام');
+  const v = ((talk + hold + acw) / calls).toFixed(1);
+  const lvl = v <= 5 ? 'good' : v <= 9 ? 'ok' : 'bad';
+  const barPct = Math.max(0, 100 - ((v - 3) / 12 * 100));
+  const tips = {
+    good: `AHT ${v} دقيقة ممتاز! الفريق يتعامل بكفاءة وسرعة مع الطلبات. تأكد أن الجودة لا تُضحى في سبيل السرعة.`,
+    ok:   `AHT ${v} دقيقة مقبول. راجع وقت الـ After-Call Work — غالباً يمكن تقليصه بتحسين الأنظمة والـ templates.`,
+    bad:  `AHT ${v} دقيقة مرتفع. ابحث عن أسباب الإطالة: هل صعوبة في الأنظمة؟ قلة تدريب؟ أم طلبات معقدة متكررة؟`,
+  };
+  show('aht', v + ' دق', badge(lvl), barPct, tips[lvl]);
+}
+
+/* ── Productivity ── */
+function calc_PI() {
+  const h = num('pi-handled'), t = num('pi-target'), av = num('pi-avail'), ac = num('pi-actual');
+  if (!h || !t || !av || isNaN(ac) || ac > av) return alert('تحقق من الأرقام');
+  const v = ((h / t) * 60 + (ac / av) * 40).toFixed(1);
+  const lvl = v >= 85 ? 'good' : v >= 70 ? 'ok' : 'bad';
+  const tips = {
+    good: `إنتاجية ${v}% ممتازة. Throughput ${(h/t*100).toFixed(0)}% مع استغلال ${(ac/av*100).toFixed(0)}% من وقت العمل.`,
+    ok:   `إنتاجية مقبولة ${v}%. راجع العوائق التشغيلية — وقت انتظار الأنظمة أو الطلبات المعلّقة.`,
+    bad:  `إنتاجية ${v}% دون المستوى. افحص التدريب، توزيع الأحمال، وعوائق الأنظمة.`,
+  };
+  show('pi', v + '%', badge(lvl), v, tips[lvl]);
+}
+
+/* ── Absenteeism ── */
+function calc_ABS() {
+  const s = num('abs-staff'), d = num('abs-days'), a = num('abs-absent');
+  if (!s || !d || isNaN(a)) return alert('تحقق من الأرقام');
+  const v = (a / (s * d) * 100).toFixed(2);
+  const lvl = v < 3 ? 'good' : v < 7 ? 'ok' : 'bad';
+  const barPct = Math.min(v / 10 * 100, 100);
+  const tips = {
+    good: `معدل غياب ${v}% ممتاز. بيئة العمل مستقرة. تابع الغياب شهرياً للكشف المبكر عن أي تغيرات.`,
+    ok:   `معدل ${v}% مقبول. راقب إذا كان الغياب مركّزاً على أفراد أو أيام معينة.`,
+    bad:  `${v}% تجاوز حد الإنذار (7%). ابدأ Return-to-Work interviews وابحث عن الأسباب الجذرية.`,
+  };
+  show('abs', v + '%', badge(lvl), barPct, tips[lvl]);
+}
+
+/* ── Conversion Rate ── */
+function calc_CVR() {
+  const t = num('cvr-total'), c = num('cvr-conv');
+  if (!t || isNaN(c) || c > t) return alert('تحقق من الأرقام');
+  const v = (c / t * 100).toFixed(1);
+  const lvl = v >= 20 ? 'good' : v >= 10 ? 'ok' : 'bad';
+  const tips = {
+    good: `Conversion ${v}% ممتاز! أكثر من خُمس الاتصالات تتحول لمبيعات فعلية. راجع العوامل المساعدة وكرّرها.`,
+    ok:   `Conversion ${v}% مقبول. طوّر script البيع وحدّد نقطة الاعتراض الأكثر شيوعاً لمعالجتها.`,
+    bad:  `Conversion ${v}% منخفض. راجع جودة الـ leads، مهارات الفريق، وملاءمة العرض للسوق.`,
+  };
+  show('cvr', v + '%', badge(lvl), v * 3, tips[lvl]);
+}
+
+/* ── SLA ── */
+function calc_SLA() {
+  const t = num('sla-total'), o = num('sla-ontime');
+  if (!t || isNaN(o) || o > t) return alert('تحقق من الأرقام');
+  const v = (o / t * 100).toFixed(1);
+  const lvl = v >= 90 ? 'good' : v >= 75 ? 'ok' : 'bad';
+  const tips = {
+    good: `SLA Compliance ${v}% ممتاز! الفريق يلتزم بمواعيد الخدمة المحددة. راجع الـ 10% لفهم أسباب التأخير.`,
+    ok:   `${v}% مقبول لكن يمكن التحسين. حدد الفئات الأكثر تأخيراً وخصص موارد إضافية لها.`,
+    bad:  `${v}% SLA منخفض — أكثر من ربع الطلبات تتأخر. راجع توزيع الأحمال وأولويات التذاكر.`,
+  };
+  show('sla', v + '%', badge(lvl), v, tips[lvl]);
+}
+
+/* ── Churn ── */
+function calc_CHURN() {
+  const s = num('churn-start'), l = num('churn-lost');
+  if (!s || isNaN(l) || l > s) return alert('تحقق من الأرقام');
+  const v = (l / s * 100).toFixed(2);
+  const lvl = v < 2 ? 'good' : v < 5 ? 'ok' : 'bad';
+  const barPct = Math.min(v / 10 * 100, 100);
+  const tips = {
+    good: `Churn ${v}% ممتاز! احتفظت بأكثر من 98% من عملائك. قيمة العميل مرتفعة وولاؤه قوي.`,
+    ok:   `Churn ${v}% مقبول. ركّز على برامج الاحتفاظ وتحسين تجربة مرحلة ما بعد الشراء.`,
+    bad:  `Churn ${v}% مرتفع ومقلق. ابحث عن أسباب المغادرة عبر Exit surveys وحسّن تجربة الـ Onboarding.`,
+  };
+  show('churn', v + '%', badge(lvl), barPct, tips[lvl]);
+}
+
+/* ── Filter ── */
+function filterCat(cat) {
+  document.querySelectorAll('.cat-tab').forEach(b => b.classList.remove('active'));
+  document.querySelector(`[data-cat="${cat}"]`).classList.add('active');
+  document.querySelectorAll('.kpi-card').forEach(c => {
+    c.classList.toggle('hidden', cat !== 'all' && c.dataset.cat !== cat);
+  });
+}
+
+/* Stagger card animation on load */
+document.querySelectorAll('.kpi-card').forEach((c, i) => {
+  c.style.animationDelay = (i * 0.07) + 's';
+});
+</script>
+</body>
+</html>
